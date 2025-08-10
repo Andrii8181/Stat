@@ -28,8 +28,9 @@ jobs:
           pip install pyinstaller
 
       - name: Build with PyInstaller
-        run: |
-          pyinstaller --name "Статистика" --onefile --noconsole --add-data "template_statistika.docx;." main.py
+  run: |
+    pyinstaller --name "Статистика" --onefile --noconsole --add-data=template_statistika.docx:. main.py
+
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
