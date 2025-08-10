@@ -32,7 +32,7 @@ jobs:
           pyinstaller --name "Статистика" --onefile --noconsole --add-data "template_statistika.docx;." main.py
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ runner.os }}-exe
-          path: dist/*
+  uses: actions/upload-artifact@v4
+  with:
+    name: ${{ runner.os }}-exe
+    path: dist/*
