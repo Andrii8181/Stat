@@ -1,5 +1,8 @@
-# analysis.py
-import pandas as pd, numpy as np
+# analysis.py (початок файла - додай/заміни ці рядки на початку)
+import sys
+import os
+import pandas as pd
+import numpy as np
 import scipy.stats as stats
 import statsmodels.api as sm
 from statsmodels.formula.api import ols
@@ -12,9 +15,17 @@ from docx.shared import Inches, Pt
 from pathlib import Path
 import io
 
-def load_data(path):
-    df = pd.read_csv(path)
-    return df
+def resource_path(relative_path):
+    """
+    Return absolute path to resource, works for dev and for PyInstaller.
+    """
+    # If running as a PyInstaller bundle, files are in _MEIPASS
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
 
 def one_way_anova(df, factor, value):
     formula = f'{value} ~ C({factor})'
@@ -96,9 +107,20 @@ def plot_interaction(df, factor_a, factor_b, value_col, out_path):
     return out_path
 
 def generate_report(docx_path, df, analyses_results, plots):
-    doc = Document()
-    doc.styles['Normal'].font.name = 'Times New Roman'
-    doc.styles['Normal'].font.size = Pt(12)
+    # Якщо є шаблон, відкриваємо його, інакше створюємо новий документ
+    tpl_path = resource_path("template_statistika.docx")
+    if os.path.exists(tpl_path):
+        doc = Document(tpl_path)
+    else:
+        doc = Document()
+    # Налаштування шрифту
+    try:
+        doc.styles['Normal'].font.name = 'Times New Roman'
+        doc.styles['Normal'].font.size = Pt(12)
+    except Exception:
+        pass
+
+    # Додаємо заголовок (якщо в шаблоні немає)
     p = doc.add_paragraph()
     p.alignment = 1
     run = p.add_run("Звіт: АНOVA аналіз (Статистика)")
@@ -121,9 +143,14 @@ def generate_report(docx_path, df, analyses_results, plots):
         doc.add_paragraph(str(v))
     # Insert plots
     for ppath in plots:
-        if Path(ppath).exists():
-            doc.add_picture(ppath, width=Inches(5))
-            doc.add_paragraph()
+        # When packaged, ppath is a normal file in working directory; check existence
+        if os.path.exists(ppath):
+            try:
+                doc.add_picture(ppath, width=Inches(5))
+                doc.add_paragraph()
+            except Exception:
+                # ignore picture insertion errors
+                pass
     para = doc.add_paragraph()
     para.alignment = 1
     para.add_run('\n\nРозробник: Чаплоуцький А.М., кафедра плодівництва і виноградарства, УНУ')
